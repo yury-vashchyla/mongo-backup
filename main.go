@@ -33,4 +33,4 @@ func main() {
   } else if env.Options.Operation == mongobackup.OpDelete {
     env.PerformDeletion()
   }
-
+}
