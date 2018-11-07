@@ -15,7 +15,7 @@ import (
   "io"
   "strings"
   "github.com/pierrec/lz4"
-  "github.com/allanhung/mongo-backupgithub.com/allanhung/mongo-backup/utils"
+  "github.com/allanhung/mongo-backup/utils"
 )
 
 

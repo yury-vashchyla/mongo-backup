@@ -15,7 +15,7 @@ import (
   "strings"
   "strconv"
   "time"
-  "github.com/allanhung/mongo-backupgithub.com/allanhung/mongo-backup/utils"
+  "github.com/allanhung/mongo-backup/utils"
 )
 
 // perform the restore & dump the oplog if required
