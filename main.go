@@ -11,7 +11,7 @@
 package main
 
 import (
-  "github.com/Dabz/mongobackup"
+  "github.com/allanhung/mongo-backup/mongobackup"
   "fmt"
 )
 
@@ -33,4 +33,4 @@ func main() {
   } else if env.Options.Operation == mongobackup.OpDelete {
     env.PerformDeletion()
   }
-}
+
