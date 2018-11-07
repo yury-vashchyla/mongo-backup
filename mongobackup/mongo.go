@@ -54,8 +54,9 @@ func (e *BackupEnv) fetchDBPath() {
 
 // lock mongodb instance db.fsyncLock()
 func (e *BackupEnv) mongoFsyncLock() error {
-  result := bson.M{}
-  err    := e.mongo.DB("admin").Run(bson.D{{"fsync", 1}, {"lock", true}}, &result)
+  // result := bson.M{}
+  // err    := e.mongo.DB("admin").Run(bson.D{{"fsync", 1}, {"lock", true}}, &result)
+  err := e.mongo.Fsynclock()
   if err != nil {
     e.error.Printf("Can not perform command fsyncLock (%s)", err)
   }
@@ -64,9 +65,9 @@ func (e *BackupEnv) mongoFsyncLock() error {
 
 // unlock mongodb instance db.fsyncUnlock
 func (e *BackupEnv) mongoFsyncUnLock() error {
-  result := bson.M{}
-  err := e.mongo.DB("admin").C("$cmd.sys.unlock").Find(bson.M{}).One(&result)
-
+  // result := bson.M{}
+  // err := e.mongo.DB("admin").C("$cmd.sys.unlock").Find(bson.M{}).One(&result)
+  err := e.mongo.FsyncUnlock()
   if err != nil {
     e.error.Printf("Can not perform command fsyncUnlock (%s)", err)
   }
