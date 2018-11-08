@@ -98,18 +98,29 @@ func (e *BackupEnv) CopyDir(source string, dest string) (err error, backedByte i
 	return nil, e.GetDirSize(dest)
 }
 
-func (e *BackupEnv) TarDir(source string, dest string) (err error, backedByte int64) {
-	// totalSize := e.GetDirSize(source)
+func (e *BackupEnv) GetDestFileName(dest string) string {
 	t := time.Now()
-	destfilename := dest + "/" + e.Options.Prefix + "-" + t.Format("20060102") + ".tar.bz2.aes"
+        return dest + "/" + e.Options.Prefix + "-" + t.Format("20060102") + ".tar.bz2.aes"
+}
+
+func (e *BackupEnv) TarDir(source string, dest string) (err error, backedByte int64) {
+        destfilename := e.GetDestFileName(dest)
 	_, err = sh.Command("mkdir","-p",dest).Command("tar", "-cf", "-", "-j", ".", sh.Dir(source)).Command("openssl", "enc", "-e", "-aes-128-cbc", "-k", e.Options.EncPasswd, "-out", destfilename).Output()
 	if err != nil {
 		return err, 0
 	}
 	stat, _ := os.Stat(destfilename)
-
 	return nil, stat.Size()
 }
+
+func (e *BackupEnv) UnTar(tarfile string, outputdir string) (err error, backedByte int64) {
+	_, err = sh.Command("mkdir","-p",outputdir).Command("openssl", "enc", "-d", "-aes-128-cbc", "-k", e.Options.EncPasswd, "-in", tarfile).Command("tar", "-xf", "-", "-j", "-C", outputdir).Output()
+	if err != nil {
+		return err, 0
+	}
+	return nil, e.GetDirSize(outputdir)
+}
+
 
 // Recursive copy directory function
 func (e *BackupEnv) recCopyDir(source string, dest string, backedByte int64, totalSize int64, pb *utils.ProgressBar) (err error, oBackedByte int64) {

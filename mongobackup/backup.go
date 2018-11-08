@@ -90,7 +90,7 @@ func (e *BackupEnv) performFullBackup(backupId string) {
 	newEntry.Id = backupId
 	newEntry.Ts = time.Now()
 	newEntry.Source = e.dbpath
-	newEntry.Dest = e.backupdirectory
+	newEntry.Dest = e.GetDestFileName(e.backupdirectory)
 	newEntry.Kind = e.Options.Kind
 	newEntry.Type = "full"
 	newEntry.Compress = e.Options.Compress
