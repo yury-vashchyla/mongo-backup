@@ -76,7 +76,7 @@ func ParseOptions() Options {
 	optMongoPwd := set.StringLong("password", 'p', "", "")
 
 	optEncPasswd := set.StringLong("encpasswd", 'e', "d0cker", "")
-	optPrefix := set.StringLong("prefix", 0, "", "")
+	optPrefix := set.StringLong("prefix", 0, "mongobak", "")
 	optPitTime := set.StringLong("pit", 0, "", "")
 	optSnapshot := set.StringLong("snapshot", 0, "", "")
 	optOutput := set.StringLong("out", 'o', "", "")
