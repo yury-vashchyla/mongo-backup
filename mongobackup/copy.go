@@ -102,7 +102,10 @@ func (e *BackupEnv) TarDir(source string, dest string) (err error, backedByte in
 	// totalSize := e.GetDirSize(source)
 	t := time.Now()
 	destfilename := dest + "/" + e.Options.Prefix + "-" + t.Format("20060102") + ".tar.bz2.aes"
-	sh.Command("cd", source).Command("tar", "-cf", "-", "-j", ".").Command("openssl", "enc", "-e", "-aes-128-cbc", "-k", e.Options.EncPasswd, "-out", destfilename).Run()
+	_, err = sh.Command("mkdir","-p",dest).Command("tar", "-cf", "-", "-j", ".", sh.Dir(source)).Command("openssl", "enc", "-e", "-aes-128-cbc", "-k", e.Options.EncPasswd, "-out", destfilename).Output()
+	if err != nil {
+		return err, 0
+	}
 	stat, _ := os.Stat(destfilename)
 
 	return nil, stat.Size()
