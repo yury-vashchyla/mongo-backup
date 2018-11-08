@@ -18,6 +18,7 @@ import (
 
 	"github.com/allanhung/mongo-backup/utils"
 	"github.com/pierrec/lz4"
+        "github.com/codeskyblue/go-sh"
 )
 
 // Copy a file to another destination
@@ -98,7 +99,7 @@ func (e *BackupEnv) CopyDir(source string, dest string) (err error, backedByte i
 }
 
 func (e *BackupEnv) TarDir(source string, dest string) (err error, backedByte int64) {
-	totalSize := e.GetDirSize(source)
+	// totalSize := e.GetDirSize(source)
 	t := time.Now()
 	destfilename := dest + "/" + e.Options.Prefix + "-" + t.Format("20060102") + ".tar.bz2.aes"
 	sh.Command("cd", source).Command("tar", "-cf", "-", "-j", ".").Command("openssl", "enc", "-e", "-aes-128-cbc", "-k", e.Options.EncPasswd, "-out", destfilename).Run()

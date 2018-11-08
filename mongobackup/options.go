@@ -40,6 +40,8 @@ type Options struct {
 	Fsynclock   bool
 	Incremental bool
 	Compress    bool
+        EncPasswd   string
+        Prefix      string
 	// mongo options
 	Mongohost string
 	Mongouser string
