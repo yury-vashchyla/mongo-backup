@@ -19,7 +19,7 @@ Perform an incremental backup
 ```
 Perform a full backup         
 ```
-./bin/mongobackup backup -t full [-backupdir string] [--tag string] [--nocompress] [--nofsynclock] [--stepdown]
+./bin/mongobackup backup -backuptype full [-backupdir string] [--tag string] [--nocompress] [--nofsynclock] [--stepdown]
 ```
 Restore a specific backup
 ```
@@ -47,9 +47,9 @@ List available backups
 Scheduling has to be performed using an external tool, e.g. cron
 Bellow a sample configuration for a daily backup where a full backup is performed once a week every Sunday and where we stored a daily backup for the last 7 days and a monthly backups for the last 13 months.
 ```cron
-0 0 * * Sun     mongobackup backup --backupdir /backup -t full --tag daily   && mongobackup delete --backupdir /backup --tag daily --entries '7-'
+0 0 * * Sun     mongobackup backup --backupdir /backup -backuptype full --tag daily   && mongobackup delete --backupdir /backup --tag daily --entries '7-'
 0 0 * * Mon-Sat mongobackup backup --backupdir /backup --tag daily
-0 0 1 * *       mongobackup backup --backupdir /backup -t full --tag monthly && mongobackup delete --backupdir /backup --tag monthly --entries '13-'
+0 0 1 * *       mongobackup backup --backupdir /backup -backuptype full --tag monthly && mongobackup delete --backupdir /backup --tag monthly --entries '13-'
 ```
 
 ## Releases
