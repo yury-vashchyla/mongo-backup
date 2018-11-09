@@ -21,19 +21,19 @@ import (
 // create mongoclient object
 func (e *BackupEnv) connectMongo() error {
   var err error
+  e.info.Printf("connecting to %s", e.Options.Mongohost)
   e.mongo, err = mgo.Dial(e.Options.Mongohost + "?connect=direct")
   if err != nil {
     return errors.New(fmt.Sprintf("Can not connect to %s (%s)", e.Options.Mongohost, err))
   }
-
+  e.mongo.SetMode(mgo.SecondaryPreferred, true)
+  e.info.Printf("login to %s with %s", e.Options.Mongohost, e.Options.Mongouser)
   if e.Options.Mongouser != "" && e.Options.Mongopwd != "" {
     err := e.mongo.DB("admin").Login(e.Options.Mongouser, e.Options.Mongopwd)
     if err != nil {
       return errors.New(fmt.Sprintf("Can not login with %s user (%s)", e.Options.Mongouser, err))
     }
   }
-
-  e.mongo.SetMode(mgo.SecondaryPreferred, true)
 
   return nil
 }

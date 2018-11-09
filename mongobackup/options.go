@@ -23,8 +23,8 @@ const (
 	OpList    = 4
 	OpDelete  = 8
 
-	DefaultKind = "backup"
-	DefaultDir  = "mongo-backup"
+	DefaultTag = "daily"
+	DefaultDir  = "mongobak"
 )
 
 // abstract structure standing for command line options
@@ -32,13 +32,13 @@ type Options struct {
 	// general options
 	Operation int
 	Directory string
-	Kind      string
+	Tag      string
 	Stepdown  bool
 	Position  string
 	Debug     bool
 	// backup options
 	Fsynclock   bool
-	Incremental bool
+	BackupType string
 	Compress    bool
         EncPasswd   string
         Prefix      string
@@ -49,7 +49,7 @@ type Options struct {
 	// restore options
 	Output   string
 	Pit      string
-	Snapshot string
+	BackupID string
 }
 
 // parse the command line and create the Options struct
@@ -62,12 +62,12 @@ func ParseOptions() Options {
 	set = getopt.New()
 	pwd, _ := os.Getwd()
 
-	optDirectory := set.StringLong("basedir", 'b', pwd+"/"+DefaultDir, "")
-	optKind := set.StringLong("kind", 'k', DefaultKind, "")
-	optNoStepdown := set.BoolLong("nostepdown", 0, "")
+	optDirectory := set.StringLong("backupdir", 'b', pwd+"/"+DefaultDir, "")
+	optTag := set.StringLong("tag", 't', DefaultTag, "")
+	optStepdown := set.BoolLong("stepdown", 0, "")
 	optNoFsyncLock := set.BoolLong("nofsynclock", 0, "")
 	optNoCompress := set.BoolLong("nocompress", 0, "")
-	optFull := set.BoolLong("full", 0, "")
+	optBackupType := set.StringLong("backuptype", 't', "inc")
 	optHelp := set.BoolLong("help", 'h', "")
 	optDebug := set.BoolLong("debug", 'd', "")
 
@@ -78,8 +78,8 @@ func ParseOptions() Options {
 	optEncPasswd := set.StringLong("encpasswd", 'e', "d0cker", "")
 	optPrefix := set.StringLong("prefix", 0, "mongobak", "")
 	optPitTime := set.StringLong("pit", 0, "", "")
-	optSnapshot := set.StringLong("snapshot", 0, "", "")
-	optOutput := set.StringLong("out", 'o', "", "")
+	optBackupID := set.StringLong("backupid", 0, "", "")
+	optOutput := set.StringLong("restoredir", 'r', "", "")
 
 	optPosition := set.StringLong("entries", 0, "", "")
 
@@ -111,9 +111,9 @@ func ParseOptions() Options {
 		os.Exit(1)
 	}
 
-	lineOption.Stepdown = !*optNoStepdown
+	lineOption.Stepdown = *optStepdown
 	lineOption.Fsynclock = !*optNoFsyncLock
-	lineOption.Incremental = !*optFull
+	lineOption.BackupType = *optBackupType
 	lineOption.Directory = *optDirectory
 	lineOption.Compress = !*optNoCompress
 	lineOption.Debug = *optDebug
@@ -123,9 +123,9 @@ func ParseOptions() Options {
 	lineOption.Mongopwd = *optMongoPwd
 	lineOption.EncPasswd = *optEncPasswd
 	lineOption.Prefix = *optPrefix
-	lineOption.Kind = *optKind
+	lineOption.Tag = *optTag
 	lineOption.Pit = *optPitTime
-	lineOption.Snapshot = *optSnapshot
+	lineOption.BackupID = *optBackupID
 	lineOption.Output = *optOutput
 	lineOption.Position = *optPosition
 
@@ -146,20 +146,20 @@ func validateOptions(o Options) bool {
 func PrintHelp() {
 	var helpMessage []string
 
-	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "-b", "--basedir=string", "base directory to save & restore backup"))
-	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "-k", "--kind=string", "metadata associated to the backup"))
-	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "", "--nostepdown", "no rs.stepDown() if this is the primary node"))
+	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "-b", "--backupdir=string", "directory to save backup"))
+	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "-k", "--tag=string", "metadata associated to the backup"))
+	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "", "--stepdown", "rs.stepDown() if this is the primary node"))
 	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "", "--nofsynclock", "Avoid using fsyncLock() and fsyncUnlock()"))
 	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "", "--nocompress", "disable compression for backup & restore"))
-	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "", "--full", "perform a non incremental backup"))
+	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "-t", "--backuptype", "backup type [inc, full]"))
 	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "", "--host=string", "mongo hostname"))
 	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "-u", "--username=string", "mongo username"))
 	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "-p", "--password=string", "mongo password"))
 	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "", "--prefix=string", "backup file name prefix"))
 	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "-e", "--encpasswd=string", "encode password"))
 	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "", "--pit=string", "point in time recovery (using oplog format: unixtimetamp:opcount)"))
-	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "", "--snapshot=string", "to restore a specific backup"))
-	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "-o", "--out=string", "output directory"))
+	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "", "--backupid=string", "to restore a specific backup"))
+	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "-r", "--restoredir=string", "directory to restore"))
 	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "", "--entries=string", "criteria string (format number[+-])"))
 
 	fmt.Printf("\nUsage:\n\n    %s command options\n", os.Args[0])
@@ -167,13 +167,13 @@ func PrintHelp() {
 	fmt.Printf("\n")
 	fmt.Printf("Commands:\n")
 	fmt.Printf("\n")
-	fmt.Printf("    %-35s %s %s\n", "perform an incremental backup", os.Args[0], "backup [--kind string] [--nocompress] [--nofsynclock] [--nostepdown]")
-	fmt.Printf("    %-35s %s %s\n", "perform a full backup", os.Args[0], "backup --full [--kind string] [--nocompress] [--nofsynclock] [--nostepdown]")
-	fmt.Printf("    %-35s %s %s\n", "restore a specific backup", os.Args[0], "restore --out string --snapshot string")
-	fmt.Printf("    %-35s %s %s\n", "perform a point in time restore", os.Args[0], "restore --out string --pit string")
-	fmt.Printf("    %-35s %s %s\n", "delete a range of backup", os.Args[0], "delete --kind string --entries string")
-	fmt.Printf("    %-35s %s %s\n", "delete a specific backup", os.Args[0], "delete --snapshot string")
-	fmt.Printf("    %-35s %s %s\n", "list available backups", os.Args[0], "list [--kind string] [--entries string]")
+	fmt.Printf("    %-35s %s %s\n", "perform an incremental backup", os.Args[0], "backup [--tag string] [--nocompress] [--nofsynclock] [--stepdown]")
+	fmt.Printf("    %-35s %s %s\n", "perform a full backup", os.Args[0], "backup -t full [--tag string] [--nocompress] [--nofsynclock] [--stepdown]")
+	fmt.Printf("    %-35s %s %s\n", "restore a specific backup", os.Args[0], "restore --restoredir string --backupid string")
+	fmt.Printf("    %-35s %s %s\n", "perform a point in time restore", os.Args[0], "restore --restoredir string --pit string")
+	fmt.Printf("    %-35s %s %s\n", "delete a range of backup", os.Args[0], "delete --tag string --entries string")
+	fmt.Printf("    %-35s %s %s\n", "delete a specific backup", os.Args[0], "delete --backupid string")
+	fmt.Printf("    %-35s %s %s\n", "list available backups", os.Args[0], "list [--tag string] [--entries string]")
 	fmt.Printf("\n")
 	fmt.Printf("Options:\n")
 	fmt.Printf("\n")

@@ -27,11 +27,11 @@ func (e *BackupEnv) PerformRestore() {
     entry *BackupEntry
   )
 
-  if (e.Options.Snapshot != "" || e.Options.Pit != "") && e.Options.Output != "" {
+  if (e.Options.BackupID != "" || e.Options.Pit != "") && e.Options.Output != "" {
     if e.Options.Pit == "" {
-      entry = e.homeval.GetBackupEntry(e.Options.Snapshot)
+      entry = e.homeval.GetBackupEntry(e.Options.BackupID)
       if entry == nil {
-        e.error.Printf("Backup %s can not be found", e.Options.Snapshot)
+        e.error.Printf("Backup %s can not be found", e.Options.BackupID)
         e.CleanupBackupEnv()
         os.Exit(1)
       }
@@ -117,7 +117,7 @@ func (e *BackupEnv) performFullRestore(entry *BackupEntry) {
   e.info.Printf("Sucessful restoration, %fGB has been restored to %s", float32(restored) / (1024*1024*1024), e.Options.Output)
 
   if entry.Type == "inc" {
-    e.info.Printf("Dumping oplog of the required snapshots")
+    e.info.Printf("Dumping oplog of the required full backup")
     err := e.DumpOplogsToDir(entryFull, entry)
     if err != nil {
       e.error.Printf("Restore of %s failed while dumping oplog (%s)", entryFull.Dest,  err)

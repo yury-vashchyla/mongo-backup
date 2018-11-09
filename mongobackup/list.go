@@ -15,15 +15,15 @@ import (
   "os"
 )
 
-// List all backups, if kinf is specified, list only backup with this kind
-func (e *BackupEnv) List(kind string) {
+// List all backups, if tag is specified, list only backup with this tag
+func (e *BackupEnv) List(tag string) {
   if e.homeval.content.Version == "" {
     e.error.Printf("Can not find a valid home file")
     e.CleanupBackupEnv()
     os.Exit(1)
   }
 
-  err, entries := e.homeval.FindEntries(e.Options.Position, kind)
+  err, entries := e.homeval.FindEntries(e.Options.Position, tag)
   if err != nil {
     e.error.Printf("Error while retrieving entries (%s)", err)
     e.CleanupBackupEnv()
@@ -31,6 +31,6 @@ func (e *BackupEnv) List(kind string) {
   }
 
   for _, entry := range entries {
-    fmt.Printf("id: %s\tts: %v\tkind: %s\ttype: %s\n", entry.Id, entry.Ts, entry.Kind, entry.Type)
+    fmt.Printf("id: %s\tts: %v\ttag: %s\ttype: %s\n", entry.Id, entry.Ts, entry.Tag, entry.Type)
   }
 }

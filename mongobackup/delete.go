@@ -19,16 +19,16 @@ import (
 
 // Perform deletion according to the command line options
 func (e *BackupEnv) PerformDeletion() error {
-  if e.Options.Snapshot != "" {
-    err := e.DeleteEntry(e.Options.Snapshot)
+  if e.Options.BackupID != "" {
+    err := e.DeleteEntry(e.Options.BackupID)
     e.homeval.Flush()
     if err != nil {
-      e.error.Printf("Error while deleting backup %s (%s)", e.Options.Snapshot, err)
+      e.error.Printf("Error while deleting backup %s (%s)", e.Options.BackupID, err)
       e.CleanupBackupEnv()
       os.Exit(1)
     }
-  } else if e.Options.Position != ""  || e.Options.Kind != "" {
-    err := e.DeleteEntries(e.Options.Position, e.Options.Kind)
+  } else if e.Options.Position != ""  || e.Options.Tag != "" {
+    err := e.DeleteEntries(e.Options.Position, e.Options.Tag)
     if err != nil {
       e.error.Printf("Error while deleting backups (%s)", err)
       e.CleanupBackupEnv()
@@ -60,14 +60,14 @@ func (e *BackupEnv) DeleteEntry(id string) error {
 }
 
 // Remove & delete a range of backups
-func (e *BackupEnv) DeleteEntries(criteria, kind string) error {
+func (e *BackupEnv) DeleteEntries(criteria, tag string) error {
   var (
     entries     []BackupEntry
     ids         []string
     err         error
   )
 
-  err, entries = e.homeval.FindEntries(criteria, kind)
+  err, entries = e.homeval.FindEntries(criteria, tag)
   if err != nil {
     e.error.Printf("Error while retrieving entries (%s)", err)
     e.CleanupBackupEnv()

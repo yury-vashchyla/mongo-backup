@@ -7,7 +7,7 @@ Mongobackup is an external tool performing full & incremental backup. Backup are
 ## Features
   * Full & incremental backup
   * Point in Time restore for incremental & full backup 
-  * Backup separation by _kind_ (e.g. daily, monthly, weekly, ...)
+  * Backup separation by _tag_ (e.g. daily, monthly, weekly, ...)
   * Partial dump of the oplog. Only the operations after the last known one are dumped
   * Secure backup by using [fsyncLock & fsyncUnlock] (https://docs.mongodb.org/manual/reference/method/db.fsyncLock/)
   * Avoid interacting with the primary node
@@ -15,31 +15,31 @@ Mongobackup is an external tool performing full & incremental backup. Backup are
 ## Usages
 Perform an incremental backup
 ```
-./bin/mongobackup backup [--kind string] [--nocompress] [--nofsynclock] [--nostepdown]
+./bin/mongobackup backup [--backupdir string] [--tag string] [--nocompress] [--nofsynclock] [--stepdown]
 ```
 Perform a full backup         
 ```
-./bin/mongobackup backup --full [--kind string] [--nocompress] [--nofsynclock] [--nostepdown]
+./bin/mongobackup backup -t full [-backupdir string] [--tag string] [--nocompress] [--nofsynclock] [--stepdown]
 ```
 Restore a specific backup
 ```
-./bin/mongobackup restore --out string --snapshot string
+./bin/mongobackup restore --restoredir string --backupid string [--backupdir string]
 ```
 Perform a point in time restore
 ```
-./bin/mongobackup restore --out string --pit string
+./bin/mongobackup restore --restoredir string --pit string [--backupdir string]
 ```
 Delete a range of backup
 ```
-./bin/mongobackup delete --kind string --entries string
+./bin/mongobackup delete --tag string --entries string [--backupdir string]
 ```
 Delete a specific backup
 ```
-./bin/mongobackup delete --snapshot string
+./bin/mongobackup delete --backupid string [--backupdir string]
 ```
 List available backups
 ```
-./bin/mongobackup list [--kind string] [--entries string]
+./bin/mongobackup list [--tag string] [--entries string] [--backupdir string]
 ```
 
 ## Sample configuration
@@ -47,9 +47,9 @@ List available backups
 Scheduling has to be performed using an external tool, e.g. cron
 Bellow a sample configuration for a daily backup where a full backup is performed once a week every Sunday and where we stored a daily backup for the last 7 days and a monthly backups for the last 13 months.
 ```cron
-0 0 * * Sun     mongobackup backup --basedir /backup --full --kind daily   && mongobackup delete --basedir /backup --kind daily --entries '7-'
-0 0 * * Mon-Sat mongobackup backup --basedir /backup --kind daily
-0 0 1 * *       mongobackup backup --basedir /backup --full --kind monthly && mongobackup delete --basedir /backup --kind monthly --entries '13-'
+0 0 * * Sun     mongobackup backup --backupdir /backup -t full --tag daily   && mongobackup delete --backupdir /backup --tag daily --entries '7-'
+0 0 * * Mon-Sat mongobackup backup --backupdir /backup --tag daily
+0 0 1 * *       mongobackup backup --backupdir /backup -t full --tag monthly && mongobackup delete --backupdir /backup --tag monthly --entries '13-'
 ```
 
 ## Releases

@@ -38,7 +38,7 @@ type BackupEntry struct {
   Ts         time.Time           `json:"ts"`
   Source     string              `json:"source"`
   Dest       string              `json:"dest"`
-  Kind       string              `json:"kind"`
+  Tag        string              `json:"tag"`
   Type       string              `json:"type"`
   Compress   bool                `json:"compress"`
   FirstOplog bson.MongoTimestamp `json:"firstOplog"`
@@ -137,7 +137,7 @@ func (b *BackupHistoryFile) GetBackupEntry(id string) *BackupEntry {
 // return the last full backup realized before a specific entry
 func (b *BackupHistoryFile) GetLastFullBackup(etr BackupEntry) *BackupEntry {
   for _, entry :=  range b.content.Entries {
-    if entry.Ts.Before(etr.Ts) && entry.Type == "full" && entry.Kind == etr.Kind {
+    if entry.Ts.Before(etr.Ts) && entry.Type == "full" && entry.Tag == etr.Tag {
       return &entry
     }
   }
@@ -160,7 +160,7 @@ func (b *BackupHistoryFile) GetNextBackup(etr BackupEntry) BackupEntry {
 }
 
 // get the last entry before the requested date
-// used to determine which snapshots to recover for pit
+// used to determine which backup to recover for pit
 func (b *BackupHistoryFile) GetLastEntryAfter(ts time.Time) *BackupEntry {
   lastentry := BackupEntry{}
   for _, entry := range b.content.Entries {
@@ -199,14 +199,14 @@ func (b *BackupHistoryFile) CheckIncrementalConsistency(entry *BackupEntry) (err
 func (b *BackupHistoryFile) GetIncEntriesBetween(from, to *BackupEntry) []BackupEntry {
   results := []BackupEntry{}
   for _, entry :=  range b.content.Entries {
-    if entry.Ts.After(from.Ts) && entry.Ts.Before(to.Ts) && entry.Kind == from.Kind {
+    if entry.Ts.After(from.Ts) && entry.Ts.Before(to.Ts) && entry.Tag == from.Tag {
       if (entry.Type == "inc") {
         results = append(results, entry)
       }
     }
   }
 
-  if to.Kind == from.Kind && to.Type == "inc" {
+  if to.Tag == from.Tag && to.Type == "inc" {
     results = append(results, *to)
   }
 
@@ -262,12 +262,12 @@ func (b* BackupHistoryFile) FindEntriesFromCriteria(criteria string, input []Bac
   return nil, result
 }
 
-// return all entries from this kind
-func (b* BackupHistoryFile) FindEntriesFromKind(kind string, input []BackupEntry) (error, []BackupEntry) {
+// return all entries from this tag
+func (b* BackupHistoryFile) FindEntriesFromTag(tag string, input []BackupEntry) (error, []BackupEntry) {
   result := []BackupEntry{}
 
   for _, entry := range input {
-    if entry.Kind == kind {
+    if entry.Tag == tag {
       result = append(result, entry)
     }
   }
@@ -277,19 +277,19 @@ func (b* BackupHistoryFile) FindEntriesFromKind(kind string, input []BackupEntry
 
 // return entries according to a criteria (string0
 // TODO should we use a lexer/parser?
-func (b *BackupHistoryFile) FindEntries(criteria, kind string) (error, []BackupEntry) {
+func (b *BackupHistoryFile) FindEntries(criteria, tag string) (error, []BackupEntry) {
   var (
     result      []BackupEntry
     err         error
   )
 
-  // filter on kind
-  if kind != "" {
-    err, result = b.FindEntriesFromKind(kind, b.content.Entries)
+  // filter on tag
+  if tag != "" {
+    err, result = b.FindEntriesFromTag(tag, b.content.Entries)
     if err != nil {
       return err, result
     }
-  } else { // no kind
+  } else { // no tag
     result = b.content.Entries
   }
 

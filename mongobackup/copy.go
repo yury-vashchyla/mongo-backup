@@ -99,14 +99,8 @@ func (e *BackupEnv) CopyDir(source string, dest string) (err error, backedByte i
 }
 
 func (e *BackupEnv) GetDestFileName(dest string) string {
-        var backuptype string
 	t := time.Now()
-        if !e.Options.Incremental {
-                backuptype = "full"
-        } else {
-                backuptype = "inc"
-        }
-        return dest + "/" + e.Options.Prefix + "-" + backuptype + "-" + t.Format("20060102") + ".tar.bz2.aes"
+        return dest + "/" + e.Options.Prefix + "-" + e.Options.BackupType + "-" + t.Format("20060102") + ".tar.bz2.aes"
 }
 
 func (e *BackupEnv) TarDir(source string, dest string) (err error, backedByte int64) {

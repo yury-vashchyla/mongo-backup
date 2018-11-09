@@ -29,7 +29,7 @@ func main() {
   } else if env.Options.Operation == mongobackup.OpRestore {
     env.PerformRestore()
   } else if env.Options.Operation == mongobackup.OpList {
-    env.List(env.Options.Kind)
+    env.List(env.Options.Tag)
   } else if env.Options.Operation == mongobackup.OpDelete {
     env.PerformDeletion()
   }

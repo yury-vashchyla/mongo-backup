@@ -26,7 +26,7 @@ func (e *BackupEnv) PerformBackup() {
 	e.backupdirectory = e.Options.Directory + "/" + backupId
 	e.ensureSecondary()
 
-	if !e.Options.Incremental {
+	if e.Options.BackupType == "full" {
 		e.performFullBackup(backupId)
 	} else {
 		e.perforIncrementalBackup(backupId)
@@ -91,8 +91,8 @@ func (e *BackupEnv) performFullBackup(backupId string) {
 	newEntry.Ts = time.Now()
 	newEntry.Source = e.dbpath
 	newEntry.Dest = e.GetDestFileName(e.backupdirectory)
-	newEntry.Kind = e.Options.Kind
-	newEntry.Type = "full"
+	newEntry.Tag = e.Options.Tag
+	newEntry.Type = e.Options.BackupType
 	newEntry.Compress = e.Options.Compress
 	e.homeval.AddNewEntry(newEntry)
 	e.homeval.Flush()
@@ -153,7 +153,7 @@ func (e *BackupEnv) perforIncrementalBackup(backupId string) {
 	newEntry.Ts = time.Now()
 	newEntry.Source = e.Options.Mongohost
 	newEntry.Dest = e.backupdirectory
-	newEntry.Kind = e.Options.Kind
+	newEntry.Tag = e.Options.Tag
 	newEntry.Type = "inc"
 	newEntry.LastOplog = lop
 	newEntry.FirstOplog = fop
