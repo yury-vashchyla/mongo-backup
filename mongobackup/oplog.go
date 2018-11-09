@@ -13,6 +13,7 @@ package mongobackup
 import (
   "os"
   "io"
+  "time"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "github.com/pierrec/lz4"
@@ -24,6 +25,16 @@ const (
   OPLOG_FILE = "oplog.bson"
 )
 
+
+func (e *BackupEnv) GetOplogFileName(dest string) string {
+	t := time.Now()
+        filename := dest + "/" + e.Options.Prefix + "-" + e.Options.BackupType + "-" + t.Format("20060102") + ".bson"
+        if e.Options.Compress {
+          return filename + ".lz4"
+        } else {
+          return filename
+        }
+}
 
 // dump the cursor to a directory
 // if compress option is specified, use lz4 while dumping
@@ -45,7 +56,7 @@ func (e *BackupEnv) BackupOplogToDir(cursor *mgo.Iter, dir string) (error, float
     return err, 0, firstop, lastop
   }
 
-  dest     = dir + "/" + OPLOG_FILE
+  dest     = e.GetOplogFileName(dir)
   opcount  = float32(e.getOplogCount())
   counter  = 0
   pb.Title = "oplog dump"
@@ -55,7 +66,6 @@ func (e *BackupEnv) BackupOplogToDir(cursor *mgo.Iter, dir string) (error, float
   pb.Show(0)
 
   if e.Options.Compress {
-    dest         += ".lz4"
     dfile, err   := os.Create(dest)
     if err != nil {
       return err, 0, firstop, lastop
@@ -132,21 +142,15 @@ func (e *BackupEnv) DumpOplogsToDir(from, to *BackupEntry) error {
   total   := len(entries)
   for index, entry := range entries {
     var reader io.Reader
+    sourcefile, err := os.Open(entry.Dest)
+    if err != nil {
+      pb.End()
+      return err
+    }
     if entry.Compress {
-      sourcename      :=  OPLOG_FILE + ".lz4"
-      sourcefile, err := os.Open(entry.Dest + "/" + sourcename)
-      if err != nil {
-        pb.End()
-        return err
-      }
       reader = lz4.NewReader(sourcefile)
     } else {
-      sourcefile, err   := os.Open(entry.Dest + "/" + OPLOG_FILE)
-      reader             = sourcefile
-      if err != nil {
-        pb.End()
-        return err
-      }
+      reader = sourcefile
     }
 
     pb.Title   = "dumping " + entry.Id

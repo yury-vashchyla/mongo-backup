@@ -90,12 +90,13 @@ func (e *BackupEnv) SetupBackupEnvironment(o Options) error {
 	e.Options = o
 	e.checkBackupDirectory()
 	e.checkHomeFile()
-	err = e.connectMongo()
-	if err != nil {
+        if e.Options.Operation == OpBackup {
+          err = e.connectMongo()
+          if err != nil {
 		e.error.Printf("Error while connecting to mongo (%s)", err)
 		return err
-	}
-
+	  }
+        }
 	return nil
 }
 

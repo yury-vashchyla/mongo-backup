@@ -151,7 +151,7 @@ func (e *BackupEnv) perforIncrementalBackup(backupId string) {
 	newEntry.Id = backupId
 	newEntry.Ts = time.Now()
 	newEntry.Source = e.Options.Mongohost
-	newEntry.Dest = e.backupdirectory
+	newEntry.Dest = e.GetOplogFileName(e.backupdirectory)
 	newEntry.Tag = e.Options.Tag
 	newEntry.Type = e.Options.BackupType
 	newEntry.LastOplog = lop
