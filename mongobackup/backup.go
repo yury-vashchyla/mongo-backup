@@ -51,7 +51,6 @@ func (e *BackupEnv) performFullBackup(backupId string) {
 	}
 
 	/* Begining critical path */
-	// err, size := e.CopyDir(e.dbpath, e.backupdirectory);
 	err, size := e.TarDir(e.dbpath, e.backupdirectory)
 	sizeGb := float64(size) / (1024 * 1024 * 1024)
 	if err != nil {
@@ -154,7 +153,7 @@ func (e *BackupEnv) perforIncrementalBackup(backupId string) {
 	newEntry.Source = e.Options.Mongohost
 	newEntry.Dest = e.backupdirectory
 	newEntry.Tag = e.Options.Tag
-	newEntry.Type = "inc"
+	newEntry.Type = e.Options.BackupType
 	newEntry.LastOplog = lop
 	newEntry.FirstOplog = fop
 	newEntry.Compress = e.Options.Compress

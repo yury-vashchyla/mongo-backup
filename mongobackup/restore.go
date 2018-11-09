@@ -77,9 +77,6 @@ func (e *BackupEnv) PerformRestore() {
 func (e *BackupEnv) performFullRestore(entry *BackupEntry) {
   var (
     entryFull *BackupEntry
-//    err       error
-//    pb        utils.ProgressBar
-//    dirSize   int64
   )
 //  err = e.checkIfDirExist(e.Options.Output)
 //  e.info.Printf("Performing a restore of backup %s", entry.Id);
@@ -101,14 +98,8 @@ func (e *BackupEnv) performFullRestore(entry *BackupEntry) {
     entryFull = entry
   }
 
-//  pb.Title = "restoring"
-//  pb.Scale = 3
-//  dirSize  = e.GetDirSize(entryFull.Dest)
-
-//  pb.Show(0)
-//  err, restored  := e.RestoreCopyDir(entryFull, entryFull.Dest, e.Options.Output, 0, dirSize, &pb)
   err, restored := e.UnTar(entryFull.Dest, e.Options.Output)
-//  pb.End()
+
   if err != nil {
     e.error.Printf("Restore of %s failed (%s)", entryFull.Dest, err)
     e.CleanupBackupEnv()

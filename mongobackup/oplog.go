@@ -15,7 +15,6 @@ import (
   "io"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
-  "github.com/pierrec/lz4"
   "github.com/allanhung/mongo-backup/utils"
 )
 
@@ -40,7 +39,7 @@ func (e *BackupEnv) BackupOplogToDir(cursor *mgo.Iter, dir string) (error, float
     firstop  bson.MongoTimestamp
   )
 
-  err     := os.MkdirAll(dir, 0777);
+  err     := os.MkdirAll(dir, 0755);
   if err != nil {
     return err, 0, firstop, lastop
   }
@@ -54,23 +53,12 @@ func (e *BackupEnv) BackupOplogToDir(cursor *mgo.Iter, dir string) (error, float
 
   pb.Show(0)
 
-  if e.Options.Compress {
-    dest         += ".lz4"
-    dfile, err   := os.Create(dest)
-    if err != nil {
-      return err, 0, firstop, lastop
-    }
-    defer dfile.Close();
-    destfile = lz4.NewWriter(dfile);
-  } else {
-    dfile, err := os.Create(dest);
-    destfile   = dfile;
-    if err != nil {
-      return err, 0, firstop, lastop;
-    }
-    defer dfile.Close();
+  dfile, err := os.Create(dest);
+  destfile   = dfile;
+  if err != nil {
+    return err, 0, firstop, lastop;
   }
-
+  defer dfile.Close();
 
   lastRow := bson.Raw{}
   isFirst := true
@@ -123,7 +111,7 @@ func (e *BackupEnv) DumpOplogsToDir(from, to *BackupEntry) error {
     return err
   }
 
-  destfile, err := os.OpenFile(oplogfile, os.O_CREATE|os.O_RDWR, 0700)
+  destfile, err := os.OpenFile(oplogfile, os.O_CREATE|os.O_RDWR, 0644)
   if err != nil {
     return err
   }
@@ -132,21 +120,11 @@ func (e *BackupEnv) DumpOplogsToDir(from, to *BackupEntry) error {
   total   := len(entries)
   for index, entry := range entries {
     var reader io.Reader
-    if entry.Compress {
-      sourcename      :=  OPLOG_FILE + ".lz4"
-      sourcefile, err := os.Open(entry.Dest + "/" + sourcename)
-      if err != nil {
-        pb.End()
-        return err
-      }
-      reader = lz4.NewReader(sourcefile)
-    } else {
-      sourcefile, err   := os.Open(entry.Dest + "/" + OPLOG_FILE)
-      reader             = sourcefile
-      if err != nil {
-        pb.End()
-        return err
-      }
+    sourcefile, err   := os.Open(entry.Dest + "/" + OPLOG_FILE)
+    reader             = sourcefile
+    if err != nil {
+      pb.End()
+      return err
     }
 
     pb.Title   = "dumping " + entry.Id
