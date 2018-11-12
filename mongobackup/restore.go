@@ -15,7 +15,8 @@ import (
   "strings"
   "strconv"
   "time"
-//  "github.com/allanhung/mongo-backup/utils"
+  "path/filepath"
+  "github.com/codeskyblue/go-sh"
 )
 
 // perform the restore & dump the oplog if required
@@ -27,15 +28,15 @@ func (e *BackupEnv) PerformRestore() {
     entry *BackupEntry
   )
 
-  if (e.Options.BackupID != "" || e.Options.Pit != "") && e.Options.Output != "" {
-    if e.Options.Pit == "" {
+  if e.Options.Output != "" {
+    if e.Options.BackupID != "" {
       entry = e.homeval.GetBackupEntry(e.Options.BackupID)
       if entry == nil {
         e.error.Printf("Backup %s can not be found", e.Options.BackupID)
         e.CleanupBackupEnv()
         os.Exit(1)
       }
-    } else {
+    } else if e.Options.Pit != "" {
       pit   := e.Options.Pit
       index := strings.Index(pit, ":")
       if index != -1 {
@@ -63,8 +64,16 @@ func (e *BackupEnv) PerformRestore() {
         e.CleanupBackupEnv()
         os.Exit(1)
       }
-    }
+    } else {
+      e.info.Printf("Get Lastest Backup to restore, BackupID: %s", (e.homeval.content.Sequence-1))
+      entry = e.homeval.GetBackupEntry(strconv.Itoa(e.homeval.content.Sequence-1))
+      if entry == nil {
+        e.error.Printf("Backup %s can not be found", e.Options.BackupID)
+        e.CleanupBackupEnv()
+        os.Exit(1)
+      }
 
+    }
     e. performFullRestore(entry)
   } else {
     e.error.Printf("Invalid configuration")
@@ -98,31 +107,41 @@ func (e *BackupEnv) performFullRestore(entry *BackupEntry) {
     entryFull = entry
   }
 
-  err, restored := e.UnTar(entryFull.Dest, e.Options.Output)
+  if !e.Options.DumpOplog {
+    err, restored := e.UnTar(entryFull.Dest, e.Options.Output)
 
-  if err != nil {
-    e.error.Printf("Restore of %s failed (%s)", entryFull.Dest, err)
-    e.CleanupBackupEnv()
-    os.Exit(1)
+    if err != nil {
+      e.error.Printf("Restore of %s failed (%s)", entryFull.Dest, err)
+      e.CleanupBackupEnv()
+      os.Exit(1)
+    }
+    e.info.Printf("Sucessful restoration, %fGB has been restored to %s", float32(restored) / (1024*1024*1024), e.Options.Output)
   }
-  e.info.Printf("Sucessful restoration, %fGB has been restored to %s", float32(restored) / (1024*1024*1024), e.Options.Output)
 
   if entry.Type == "inc" {
-    e.info.Printf("Dumping oplog of the required full backup")
+    e.info.Printf("Dumping oplog of the required full backup %s", entryFull.Id)
     err := e.DumpOplogsToDir(entryFull, entry)
     if err != nil {
       e.error.Printf("Restore of %s failed while dumping oplog (%s)", entryFull.Dest,  err)
       e.CleanupBackupEnv()
       os.Exit(1)
     }
-    message := "Success. To replay the oplog, start mongod and execute: "
-    if e.Options.Pit == "" {
-      message += "`mongorestore --oplogReplay " + e.Options.Output + "/oplog/`"
+    if e.Options.DumpOplog {
+      e.TarDir(e.Options.Output + "/oplog/", filepath.Dir(entry.Dest)) 
+      e.info.Printf("remove directory: %s", e.Options.Output)
+      _, err = sh.Command("rm -rf "+e.Options.Output + "/oplog").Command("rmdir "+e.Options.Output).Output()
+      if err != nil {
+         e.info.Printf("remove directory: %s failed with error %s", e.Options.Output, err)
+      }
+      e.info.Printf("oplog dump finish with filename: %s", e.GetDestFileName(filepath.Dir(entry.Dest)))
     } else {
-      message += "`mongorestore --oplogReplay --oplogLimit " +  e.Options.Pit + " " + e.Options.Output + "/oplog/`"
+      message := "Success. To replay the oplog, start mongod and execute: "
+      if e.Options.Pit == "" {
+        message += "`mongorestore --oplogReplay " + e.Options.Output + "/oplog/`"
+      } else {
+        message += "`mongorestore --oplogReplay --oplogLimit " +  e.Options.Pit + " " + e.Options.Output + "/oplog/`"
+      }
+      e.info.Printf(message)
     }
-
-    e.info.Printf(message)
   }
 }
-

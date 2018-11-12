@@ -50,6 +50,7 @@ type Options struct {
 	Output   string
 	Pit      string
 	BackupID string
+        DumpOplog bool
 }
 
 // parse the command line and create the Options struct
@@ -99,6 +100,8 @@ func ParseOptions() Options {
 		lineOption.Operation = OpBackup
 	} else if os.Args[1] == "restore" {
 		lineOption.Operation = OpRestore
+	} else if os.Args[1] == "oplogdump" {
+		lineOption.Operation = OpRestore
 	} else if os.Args[1] == "list" {
 		lineOption.Operation = OpList
 	} else if os.Args[1] == "delete" {
@@ -126,6 +129,7 @@ func ParseOptions() Options {
 	lineOption.Tag = *optTag
 	lineOption.Pit = *optPitTime
 	lineOption.BackupID = *optBackupID
+	lineOption.DumpOplog = (os.Args[1] == "oplogdump")
 	lineOption.Output = *optOutput
 	lineOption.Position = *optPosition
 
@@ -159,6 +163,7 @@ func PrintHelp() {
 	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "-e", "--encpasswd=string", "encode password"))
 	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "", "--pit=string", "point in time recovery (using oplog format: unixtimetamp:opcount)"))
 	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "", "--backupid=string", "to restore a specific backup"))
+	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "", "--dumpoplog", "dump oplop"))
 	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "-r", "--restoredir=string", "directory to restore"))
 	helpMessage = append(helpMessage, fmt.Sprintf("%-5s %-20s %s", "", "--entries=string", "criteria string (format number[+-])"))
 
@@ -170,7 +175,9 @@ func PrintHelp() {
 	fmt.Printf("    %-35s %s %s\n", "perform an incremental backup", os.Args[0], "backup [--tag string] [--nocompress] [--nofsynclock] [--stepdown]")
 	fmt.Printf("    %-35s %s %s\n", "perform a full backup", os.Args[0], "backup -backuptype full [--tag string] [--nocompress] [--nofsynclock] [--stepdown]")
 	fmt.Printf("    %-35s %s %s\n", "restore a specific backup", os.Args[0], "restore --restoredir string --backupid string")
-	fmt.Printf("    %-35s %s %s\n", "perform a point in time restore", os.Args[0], "restore --restoredir string --pit string")
+	fmt.Printf("    %-35s %s %s\n", "perform a point in time restore", os.Args[0], "restore --restoredir string --backupid string --pit string")
+	fmt.Printf("    %-35s %s %s\n", "perform a point in time restore", os.Args[0], "restore --restoredir string --backupid string --dumpoplog")
+	fmt.Printf("    %-35s %s %s\n", "perform oplog dump", os.Args[0], "oplogdump --restoredir string --backupid string")
 	fmt.Printf("    %-35s %s %s\n", "delete a range of backup", os.Args[0], "delete --tag string --entries string")
 	fmt.Printf("    %-35s %s %s\n", "delete a specific backup", os.Args[0], "delete --backupid string")
 	fmt.Printf("    %-35s %s %s\n", "list available backups", os.Args[0], "list [--tag string] [--entries string]")

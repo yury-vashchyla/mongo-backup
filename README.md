@@ -29,6 +29,10 @@ Perform a point in time restore
 ```
 ./bin/mongo-backup restore --restoredir string --pit string [--backupdir string]
 ```
+Perform a oplog dump
+```
+./bin/mongo-backup oplogdump --restoredir string [--backupdir string]
+```
 Delete a range of backup
 ```
 ./bin/mongo-backup delete --tag string --entries string [--backupdir string]
@@ -45,11 +49,11 @@ List available backups
 ## Sample configuration
 
 Scheduling has to be performed using an external tool, e.g. cron
-Bellow a sample configuration for a daily backup where a full backup is performed twice a week every Sunday, Wednesday and where we stored a daily backup for the last 7 days and a monthly backups for the last 13 months.
+Bellow a sample configuration for a daily backup where a full backup is performed twice a week every Sunday, Wednesday and where we stored a daily backup for the last 7 days and backup oplog every 15mins.
 ```cron
-0 0 * * 0,3       mongo-backup backup --backupdir /backup -backuptype full --tag daily   && mongo-backup delete --backupdir /backup --tag daily --entries '7-'
-0 0 * * 1,2,4,5,6 mongo-backup backup --backupdir /backup --tag daily
-0 0 1 * *         mongo-backup backup --backupdir /backup -backuptype full --tag monthly && mongo-backup delete --backupdir /backup --tag monthly --entries '13-'
+0 0 * * 0,3              mongo-backup backup --backupdir /backup -backuptype full --tag daily   && mongo-backup delete --backupdir /backup --tag daily --entries '7-'
+*/15 * * * *             mongo-backup backup --backupdir /backup --tag daily
+0 0 * * * 1,2,4,5,6      mongo-backup oplogdump --restoredir /backup/tmp --backupdir /backup --tag daily
 ```
 
 ## Releases
