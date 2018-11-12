@@ -15,31 +15,31 @@ Mongobackup is an external tool performing full & incremental backup. Backup are
 ## Usages
 Perform an incremental backup
 ```
-./bin/mongobackup backup [--backupdir string] [--tag string] [--nocompress] [--nofsynclock] [--stepdown]
+./bin/mongo-backup backup [--backupdir string] [--tag string] [--nocompress] [--nofsynclock] [--stepdown]
 ```
 Perform a full backup         
 ```
-./bin/mongobackup backup -backuptype full [-backupdir string] [--tag string] [--nocompress] [--nofsynclock] [--stepdown]
+./bin/mongo-backup backup -backuptype full [-backupdir string] [--tag string] [--nocompress] [--nofsynclock] [--stepdown]
 ```
 Restore a specific backup
 ```
-./bin/mongobackup restore --restoredir string --backupid string [--backupdir string]
+./bin/mongo-backup restore --restoredir string --backupid string [--backupdir string]
 ```
 Perform a point in time restore
 ```
-./bin/mongobackup restore --restoredir string --pit string [--backupdir string]
+./bin/mongo-backup restore --restoredir string --pit string [--backupdir string]
 ```
 Delete a range of backup
 ```
-./bin/mongobackup delete --tag string --entries string [--backupdir string]
+./bin/mongo-backup delete --tag string --entries string [--backupdir string]
 ```
 Delete a specific backup
 ```
-./bin/mongobackup delete --backupid string [--backupdir string]
+./bin/mongo-backup delete --backupid string [--backupdir string]
 ```
 List available backups
 ```
-./bin/mongobackup list [--tag string] [--entries string] [--backupdir string]
+./bin/mongo-backup list [--tag string] [--entries string] [--backupdir string]
 ```
 
 ## Sample configuration
@@ -47,9 +47,9 @@ List available backups
 Scheduling has to be performed using an external tool, e.g. cron
 Bellow a sample configuration for a daily backup where a full backup is performed twice a week every Sunday, Wednesday and where we stored a daily backup for the last 7 days and a monthly backups for the last 13 months.
 ```cron
-0 0 * * 0,3       mongobackup backup --backupdir /backup -backuptype full --tag daily   && mongobackup delete --backupdir /backup --tag daily --entries '7-'
-0 0 * * 1,2,4,5,6 mongobackup backup --backupdir /backup --tag daily
-0 0 1 * *         mongobackup backup --backupdir /backup -backuptype full --tag monthly && mongobackup delete --backupdir /backup --tag monthly --entries '13-'
+0 0 * * 0,3       mongo-backup backup --backupdir /backup -backuptype full --tag daily   && mongo-backup delete --backupdir /backup --tag daily --entries '7-'
+0 0 * * 1,2,4,5,6 mongo-backup backup --backupdir /backup --tag daily
+0 0 1 * *         mongo-backup backup --backupdir /backup -backuptype full --tag monthly && mongo-backup delete --backupdir /backup --tag monthly --entries '13-'
 ```
 
 ## Releases

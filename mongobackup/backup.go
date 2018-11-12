@@ -124,10 +124,10 @@ func (e *BackupEnv) perforIncrementalBackup(backupId string) {
 	firstOplogEntries = e.getOplogFirstEntries()["ts"].(bson.MongoTimestamp)
 
 	if firstOplogEntries > lastSavedOplog {
-		e.error.Printf("Can not find a common point in the oplog")
-		e.error.Printf("You must perform a full backup")
-
-		e.CleanupBackupEnv()
+		e.info.Printf("Can not find a common point in the oplog")
+		e.info.Printf("Start to perform a full backup")
+                e.Options.BackupType = "full"
+                e.performFullBackup(backupId)
 		os.Exit(1)
 	}
 
