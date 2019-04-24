@@ -14,6 +14,7 @@ import (
   "os"
   "errors"
   "strings"
+  "path/filepath"
 )
 
 
@@ -51,7 +52,7 @@ func (e *BackupEnv) DeleteEntry(id string) error {
     e.error.Printf("Error while removing entry from the log file (%s), attempting to continue...", err)
   }
 
-  err = os.RemoveAll(entry.Dest)
+  err = os.RemoveAll(filepath.Dir(entry.Dest))
   if err != nil {
     e.error.Printf("Error while deleting backup files (%s), attempting to continue...", err)
   }
@@ -101,7 +102,7 @@ func (e *BackupEnv) DeleteEntries(criteria, tag string) error {
       if err != nil {
         e.error.Printf("Error while removing entry from the log file (%s), attempting to continue...", err)
       }
-      err = os.RemoveAll(entry.Dest)
+      err = os.RemoveAll(filepath.Dir(entry.Dest))
       if err != nil {
         e.error.Printf("Error while deleting backup files (%s), attempting to continue...", err)
       }
@@ -112,7 +113,7 @@ func (e *BackupEnv) DeleteEntries(criteria, tag string) error {
       if err != nil {
         e.error.Printf("Error while removing entry from the log file (%s), attempting to continue...", err)
       }
-      err = os.RemoveAll(entry.Dest)
+      err = os.RemoveAll(filepath.Dir(entry.Dest))
       if err != nil {
         e.error.Printf("Error while deleting backup files (%s), attempting to continue...", err)
       }

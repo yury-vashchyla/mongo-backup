@@ -45,15 +45,18 @@ List available backups
 ```
 ./bin/mongo-backup list [--tag string] [--entries string] [--backupdir string]
 ```
-
+upload backup to s3
+```
+./bin/mongo-backup upload --restoredir string --accesskey string --secretkey string --bucketname string [--endpoint string] [--nossl] [--backupid string]
+```
 ## Sample configuration
 
 Scheduling has to be performed using an external tool, e.g. cron
 Bellow a sample configuration for a daily backup where a full backup is performed twice a week every Sunday, Wednesday and where we stored a daily backup for the last 7 days and backup oplog every 15mins.
 ```cron
-0 0 * * 0,3              mongo-backup backup --backupdir /backup --backuptype full --tag daily --username bakuser --password bakpass && mongo-backup delete --backupdir /backup --tag daily --entries '7-'
+0 0 * * 0,3              mongo-backup backup --backupdir /backup --backuptype full --tag daily --username bakuser --password bakpass && mongo-backup delete --backupdir /backup --tag daily --entries '7-' && mongo-backup upload --restoredir string --accesskey string --secretkey string --bucketname string
 */15 * * * *             mongo-backup backup --backupdir /backup --tag daily --username bakuser --password bakpass
-0 0 * * * 1,2,4,5,6      mongo-backup oplogdump --restoredir /backup/tmp --backupdir /backup --tag daily --username bakuser --password bakpass
+10 0 * * * 1,2,4,5,6      mongo-backup upload --restoredir /dbbackup/tmp --accesskey akey --secretkey skey --bucketname bname --backupdir /dbbackup
 ```
 
 ## Releases

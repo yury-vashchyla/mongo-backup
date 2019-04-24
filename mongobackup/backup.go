@@ -51,7 +51,7 @@ func (e *BackupEnv) performFullBackup(backupId string) {
 	}
 
 	/* Begining critical path */
-	err, size := e.TarDir(e.dbpath, e.backupdirectory)
+	err, size := e.TarDir(e.dbpath, e.backupdirectory, backupId)
 	sizeGb := float64(size) / (1024 * 1024 * 1024)
 	if err != nil {
 		e.error.Print("An error occurred while backing up ...")
@@ -89,7 +89,7 @@ func (e *BackupEnv) performFullBackup(backupId string) {
 	newEntry.Id = backupId
 	newEntry.Ts = time.Now()
 	newEntry.Source = e.dbpath
-	newEntry.Dest = e.GetDestFileName(e.backupdirectory)
+	newEntry.Dest = e.GetDestFileName(e.backupdirectory, backupId)
 	newEntry.Tag = e.Options.Tag
 	newEntry.Type = e.Options.BackupType
 	newEntry.Compress = e.Options.Compress
@@ -126,8 +126,8 @@ func (e *BackupEnv) perforIncrementalBackup(backupId string) {
 	if firstOplogEntries > lastSavedOplog {
 		e.info.Printf("Can not find a common point in the oplog")
 		e.info.Printf("Start to perform a full backup")
-                e.Options.BackupType = "full"
-                e.performFullBackup(backupId)
+		e.Options.BackupType = "full"
+		e.performFullBackup(backupId)
 		os.Exit(1)
 	}
 

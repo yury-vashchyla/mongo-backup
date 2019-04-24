@@ -14,7 +14,7 @@ import (
 	"os"
 	"time"
 
-        "github.com/codeskyblue/go-sh"
+	"github.com/codeskyblue/go-sh"
 )
 
 // Return the total size of the directory in byte
@@ -36,14 +36,18 @@ func (e *BackupEnv) GetDirSize(source string) int64 {
 	return sum
 }
 
-func (e *BackupEnv) GetDestFileName(dest string) string {
+func (e *BackupEnv) GetDestFileName(dest string, fullbakid string) string {
 	t := time.Now()
-        return dest + "/" + e.Options.Prefix + "-" + e.Options.BackupType + "-" + t.Format("20060102") + ".tar.bz2.aes"
+	if fullbakid == "" {
+		return dest + "/" + e.Options.Prefix + "-" + e.Options.BackupType + "-" + t.Format("20060102") + ".tar.bz2.aes"
+	} else {
+		return dest + "/" + e.Options.Prefix + "-" + e.Options.BackupType + "-" + fullbakid + "-" + t.Format("20060102") + ".tar.bz2.aes"
+	}
 }
 
-func (e *BackupEnv) TarDir(source string, dest string) (err error, backedByte int64) {
-        destfilename := e.GetDestFileName(dest)
-	_, err = sh.Command("mkdir","-p",dest).Command("tar", "-cf", "-", "-j", ".", sh.Dir(source)).Command("openssl", "enc", "-e", "-aes-128-cbc", "-k", e.Options.EncPasswd, "-out", destfilename).Output()
+func (e *BackupEnv) TarDir(source string, dest string, fullbakid string) (err error, backedByte int64) {
+	destfilename := e.GetDestFileName(dest, fullbakid)
+	_, err = sh.Command("mkdir", "-p", dest).Command("tar", "-cf", "-", "-j", ".", sh.Dir(source)).Command("openssl", "enc", "-e", "-aes-128-cbc", "-k", e.Options.EncPasswd, "-out", destfilename).Output()
 	if err != nil {
 		return err, 0
 	}
@@ -52,13 +56,12 @@ func (e *BackupEnv) TarDir(source string, dest string) (err error, backedByte in
 }
 
 func (e *BackupEnv) UnTar(tarfile string, outputdir string) (err error, backedByte int64) {
-	_, err = sh.Command("mkdir","-p",outputdir).Command("openssl", "enc", "-d", "-aes-128-cbc", "-k", e.Options.EncPasswd, "-in", tarfile).Command("tar", "-xf", "-", "-j", "-C", outputdir).Output()
+	_, err = sh.Command("mkdir", "-p", outputdir).Command("openssl", "enc", "-d", "-aes-128-cbc", "-k", e.Options.EncPasswd, "-in", tarfile).Command("tar", "-xf", "-", "-j", "-C", outputdir).Output()
 	if err != nil {
 		return err, 0
 	}
 	return nil, e.GetDirSize(outputdir)
 }
-
 
 func (e *BackupEnv) checkIfDirExist(dir string) error {
 	_, err := os.Stat(dir)
